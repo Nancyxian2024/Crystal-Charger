@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水晶能量站 | Crystal Resonance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            touch-action: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            z-index: 1;
+        }
+
+        .ui-layer {
+            position: absolute;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 20px;
+        }
+
+        .title-block {
+            margin-top: 20px;
+            opacity: 0.9;
+            transition: opacity 0.5s;
+        }
+        
+        #crystalName {
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            transition: color 0.5s ease;
+            font-weight: 300;
+        }
+
+        #crystalMeaning {
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            color: rgba(255,255,255,0.7);
+            transition: all 0.5s ease;
+            font-weight: 300;
+        }
+
+        .control-block {
+            margin-bottom: 40px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Color Picker Styles */
+        .color-picker {
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.4);
+            padding: 12px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .color-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .color-btn.active {
+            transform: scale(1.4);
+            border-color: white;
+            box-shadow: 0 0 15px currentColor;
+            z-index: 2;
+        }
+
+        button#chargeBtn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #e0e7ff;
+            padding: 14px 36px;
+            border-radius: 50px;
+            font-size: 14px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+            outline: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-weight: 500;
+        }
+
+        button#chargeBtn:active, button#chargeBtn.active {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 40px currentColor;
+            transform: scale(0.96);
+            border-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .energy-bar-container {
+            width: 220px;
+            height: 3px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .energy-bar {
+            height: 100%;
+            width: 0%;
+            background: white; 
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .pulse-text {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            animation: pulse 2.5s infinite;
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-layer">
+        <div class="title-block">
+            <!-- Dynamic Crystal Title -->
+            <h1 id="crystalName" class="text-3xl tracking-[0.2em] text-white">CRYSTAL</h1>
+            <p id="crystalMeaning" class="text-xs">RESONANCE</p>
+        </div>
+
+        <div class="control-block">
+            <!-- Color Selection: Using data-type to select crystal -->
+            <div class="color-picker">
+                <!-- White Quartz -->
+                <div class="color-btn active" style="background: #e2e8f0; color: #e2e8f0;" onclick="selectCrystal('white', this)" title="白水晶 | Clear Quartz"></div> 
+                <!-- Amethyst -->
+                <div class="color-btn" style="background: #a855f7; color: #a855f7;" onclick="selectCrystal('amethyst', this)" title="紫水晶 | Amethyst"></div>   
+                <!-- Citrine -->
+                <div class="color-btn" style="background: #fbbf24; color: #fbbf24;" onclick="selectCrystal('citrine', this)" title="黄水晶 | Citrine"></div> 
+                <!-- Rose Quartz -->
+                <div class="color-btn" style="background: #f472b6; color: #f472b6;" onclick="selectCrystal('rose', this)" title="粉水晶 | Rose Quartz"></div> 
+                <!-- Phantom Quartz -->
+                <div class="color-btn" style="background: #10b981; color: #10b981;" onclick="selectCrystal('phantom', this)" title="幽灵水晶 | Phantom Quartz"></div>  
+            </div>
+
+            <div class="energy-bar-container">
+                <div class="energy-bar" id="energyBar"></div>
+            </div>
+            <div class="pulse-text" id="statusText">长按注入能量 | HOLD TO CHARGE</div>
+            
+            <button id="chargeBtn" 
+                onmousedown="startCharging()" 
+                onmouseup="stopCharging()" 
+                ontouchstart="startCharging(event)" 
+                ontouchend="stopCharging(event)">
+                充能 | CHARGE
+            </button>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="crystalCanvas"></canvas>
+    </div>
+
+<script>
+    /**
+     * Setup & Config
+     */
+    const canvas = document.getElementById('crystalCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('statusText');
+    const energyBar = document.getElementById('energyBar');
+    const chargeBtn = document.getElementById('chargeBtn');
+    const crystalNameEl = document.getElementById('crystalName');
+    const crystalMeaningEl = document.getElementById('crystalMeaning');
+
+    let width, height;
+    let isCharging = false;
+    let energyLevel = 0; // 0 to 100
+    let time = 0;
+    
+    // Default State
+    let currentCrystalKey = 'white';
+    let baseHue = 210;
+    let accentColor = '#e2e8f0';
+
+    // Audio Context
+    let audioCtx;
+    let mainGain, osc1, osc2, oscHarmonic, lfo;
+    let isAudioInit = false;
+
+    // --- Crystal Data: Meaning & Sound (Singing Bowl Frequencies) & Color ---
+    // Frequencies approximate Chakra Singing Bowls
+    const crystals = {
+        'white': {
+            name: "白水晶 | CLEAR QUARTZ",
+            meaning: "专注 · 净化 · 平衡 | Focus · Purify · Balance",
+            color: "#e2e8f0",
+            hue: 200,
+            sound: { baseFreq: 493.88 } // Note B4 (Crown Chakra) - Pure, High
+        },
+        'amethyst': {
+            name: "紫水晶 | AMETHYST",
+            meaning: "智慧 · 灵性 · 觉醒 | Wisdom · Spirit · Awake",
+            color: "#a855f7",
+            hue: 270,
+            sound: { baseFreq: 440.00 } // Note A4 (Third Eye) - Mystical
+        },
+        'citrine': {
+            name: "黄水晶 | CITRINE",
+            meaning: "财富 · 自信 · 能量 | Wealth · Confidence · Energy",
+            color: "#fbbf24",
+            hue: 45,
+            sound: { baseFreq: 329.63 } // Note E4 (Solar Plexus) - Bright
+        },
+        'rose': {
+            name: "粉水晶 | ROSE QUARTZ",
+            meaning: "爱情 · 治愈 · 人缘 | Love · Healing · Harmony",
+            color: "#f472b6",
+            hue: 330,
+            sound: { baseFreq: 349.23 } // Note F4 (Heart Chakra) - Warm
+        },
+        'phantom': {
+            name: "幽灵水晶 | PHANTOM QUARTZ",
+            meaning: "事业 · 招财 · 异象 | Career · Fortune · Vision",
+            color: "#10b981",
+            hue: 150,
+            sound: { baseFreq: 261.63 } // Note C4 (Root Chakra) - Grounding
+        }
+    };
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /**
+     * Crystal Selection Logic
+     */
+    window.selectCrystal = function(key, targetBtn) {
+        if (!crystals[key]) return;
+        
+        currentCrystalKey = key;
+        const data = crystals[key];
+        
+        // Update Internal State
+        baseHue = data.hue;
+        accentColor = data.color;
+
+        // Update UI Text
+        crystalNameEl.innerText = data.name; 
+        crystalMeaningEl.innerText = data.meaning;
+        
+        // Update UI Colors
+        crystalMeaningEl.style.color = data.color;
+        crystalMeaningEl.style.textShadow = `0 0 10px ${data.color}`;
+        
+        energyBar.style.background = `linear-gradient(90deg, #ffffff, ${data.color})`;
+        energyBar.style.color = data.color; 
+        
+        chargeBtn.style.color = data.color;
+        chargeBtn.style.boxShadow = `0 0 20px ${data.color}33`; 
+        chargeBtn.style.borderColor = `rgba(255,255,255,0.3)`;
+
+        if (targetBtn) {
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            targetBtn.classList.add('active');
+        }
+
+        // Update Sound Profile (Real-time ramp)
+        if (isAudioInit && osc1) {
+            const now = audioCtx.currentTime;
+            // Ramp fundamental frequency smoothly
+            osc1.frequency.setTargetAtTime(data.sound.baseFreq, now, 0.5);
+            // Ramp detuned beat frequency
+            osc2.frequency.setTargetAtTime(data.sound.baseFreq + 2.5, now, 0.5); // Fixed 2.5Hz beat
+            // Ramp harmonic
+            oscHarmonic.frequency.setTargetAtTime(data.sound.baseFreq * 2.02, now, 0.5); // Slightly inharmonic
+        }
+        
+        if(energyLevel > 5) energyLevel -= 2; 
+    }
+
+    // Initialize with White Quartz
+    selectCrystal('white', null);
+
+
+    /**
+     * Audio System: CRYSTAL SINGING BOWL SYNTHESIS
+     * Method: Additive Synthesis with Beats (Interference)
+     */
+    function initAudio() {
+        if (isAudioInit) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        
+        const profile = crystals[currentCrystalKey].sound;
+
+        // Master Gain (Volume Control / Envelope)
+        mainGain = audioCtx.createGain();
+        mainGain.gain.value = 0;
+        
+        // Compressor to smoothen the beat interaction
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -10;
+        compressor.ratio.value = 12;
+        
+        mainGain.connect(compressor);
+        compressor.connect(audioCtx.destination);
+
+        // --- Layer 1: Fundamental Tone (The "Bowl" Body) ---
+        osc1 = audioCtx.createOscillator();
+        osc1.type = 'sine'; // Singing bowls are very close to pure sine
+        osc1.frequency.value = profile.baseFreq;
+        osc1.connect(mainGain);
+        osc1.start();
+
+        // --- Layer 2: Detuned Tone (The "Wa-Wa-Wa" Beat) ---
+        // A slightly detuned sine wave creates interference patterns (beats)
+        // typical of singing bowls
+        osc2 = audioCtx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = profile.baseFreq + 2.5; // ~2.5Hz beating pulse
+        
+        const osc2Gain = audioCtx.createGain();
+        osc2Gain.gain.value = 0.8; // Mix slightly lower
+        osc2.connect(osc2Gain);
+        osc2Gain.connect(mainGain);
+        osc2.start();
+
+        // --- Layer 3: High Harmonic (The "Glass/Crystal" Edge) ---
+        oscHarmonic = audioCtx.createOscillator();
+        oscHarmonic.type = 'sine';
+        oscHarmonic.frequency.value = profile.baseFreq * 2.02; // Roughly octave up, slightly sharp
+        
+        const harmGain = audioCtx.createGain();
+        harmGain.gain.value = 0.15; // Subtle shimmer
+        oscHarmonic.connect(harmGain);
+        harmGain.connect(mainGain);
+        oscHarmonic.start();
+
+        isAudioInit = true;
+    }
+
+    function updateAudio(charging, level) {
+        if (!isAudioInit) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+
+        if (charging) {
+            // Attack: Swells up slowly like rubbing the bowl rim
+            mainGain.gain.setTargetAtTime(0.4, now, 0.8);
+            
+            // Subtle Frequency Shift (Singing effect)
+            // As energy rises, the beat gets slightly faster
+            const base = crystals[currentCrystalKey].sound.baseFreq;
+            // Beat speed increases from 2.5Hz to 4Hz
+            osc2.frequency.setTargetAtTime(base + 2.5 + (level * 0.015), now, 0.1); 
+            
+        } else {
+            // Release: Very long, slow decay (The "Bowl" Sustain)
+            // This is key for the crystal bowl effect
+            mainGain.gain.setTargetAtTime(0, now, 2.5); 
+            
+            // Reset frequencies slowly
+            const base = crystals[currentCrystalKey].sound.baseFreq;
+            osc1.frequency.setTargetAtTime(base, now, 1.0);
+            osc2.frequency.setTargetAtTime(base + 2.5, now, 1.0);
+        }
+    }
+
+    /**
+     * Visuals: Crystal & Particles
+     */
+    const particles = [];
+
+    class Particle {
+        constructor() {
+            this.reset();
+        }
+
+        reset() {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 60 + Math.random() * 60;
+            this.x = width/2 + Math.cos(angle) * dist;
+            this.y = height/2 + Math.sin(angle) * dist;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.life = 0;
+            this.maxLife = 40 + Math.random() * 40;
+            this.size = Math.random() * 2 + 0.5;
+            this.active = false;
+        }
+
+        spawn() {
+            this.reset();
+            this.active = true;
+            
+            const spawnRadius = 180 - (energyLevel * 0.8); 
+            const angle = Math.random() * Math.PI * 2;
+            this.x = width/2 + Math.cos(angle) * spawnRadius;
+            this.y = height/2 + Math.sin(angle) * spawnRadius;
+            
+            // Attraction force
+            const speed = 1 + (energyLevel / 15);
+            this.vx = (width/2 - this.x) * 0.015 * speed;
+            this.vy = (height/2 - this.y) * 0.015 * speed;
+        }
+
+        update() {
+            if (!this.active) return;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life++;
+            
+            const distToCenter = Math.hypot(width/2 - this.x, height/2 - this.y);
+            if (distToCenter < 30) this.active = false;
+        }
+
+        draw() {
+            if (!this.active) return;
+            const alpha = 1 - (this.life / this.maxLife);
+            ctx.globalAlpha = alpha;
+            // Hue variation - Special case for white to avoid rainbows
+            let hue = baseHue;
+            let saturation = "90%";
+            if (currentCrystalKey === 'white') {
+                hue = 200; // Blue tint
+                saturation = Math.random() < 0.5 ? "10%" : "30%"; // Low saturation for white
+            } else {
+                hue = baseHue + (Math.random() * 40 - 20); 
+            }
+            
+            ctx.fillStyle = `hsl(${hue}, ${saturation}, 70%)`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    for(let i=0; i<120; i++) particles.push(new Particle());
+
+    function drawCrystal(cx, cy, scale) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        
+        // Levitation
+        const floatY = Math.sin(time * 1.5) * 8;
+        ctx.translate(0, floatY);
+        
+        const pulse = 1 + (isCharging ? Math.sin(time * 20) * 0.01 * (energyLevel/25) : 0);
+        ctx.scale(scale * pulse, scale * pulse);
+
+        // Outer Glow
+        if (energyLevel > 0) {
+            ctx.shadowBlur = 15 + (energyLevel * 0.5);
+            ctx.shadowColor = accentColor;
+        }
+
+        // --- Geometry ---
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        
+        // Colors
+        let saturation = "70%";
+        let lightness = "65%";
+        let lightSide = "85%";
+        let darkSide = "20%";
+        
+        // Special adjustment for White Crystal to make it look "White/Clear" not grey
+        if (currentCrystalKey === 'white') {
+            saturation = "15%"; 
+            lightness = "90%";
+            lightSide = "98%";
+            darkSide = "60%";
+        }
+
+        const colorBase = `hsla(${baseHue}, ${saturation}, ${lightness}, 0.8)`;
+        const colorLight = `hsla(${baseHue}, ${saturation}, ${lightSide}, 1)`;
+
+        // Main Body Path
+        ctx.beginPath();
+        ctx.moveTo(0, -90);  // Top tip
+        ctx.lineTo(45, -25); // Top Right
+        ctx.lineTo(45, 65);  // Bottom Right
+        ctx.lineTo(0, 95);   // Bottom Tip
+        ctx.lineTo(-45, 65); // Bottom Left
+        ctx.lineTo(-45, -25);// Top Left
+        ctx.closePath();
+
+        // Fill
+        const grad = ctx.createLinearGradient(-40, -40, 40, 80);
+        grad.addColorStop(0, `hsla(${baseHue}, ${saturation}, ${darkSide}, 0.9)`); // Dark side
+        grad.addColorStop(0.5, `hsla(${baseHue}, ${saturation}, ${lightness}, 0.8)`);
+        grad.addColorStop(1, `hsla(${baseHue}, ${saturation}, ${lightSide}, 0.9)`); // Light side
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Stroke
+        ctx.strokeStyle = colorLight;
+        ctx.stroke();
+
+        // Facets (Lines inside)
+        ctx.beginPath();
+        ctx.moveTo(0, -90); ctx.lineTo(0, 95); // Center vertical
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-45, -25); ctx.lineTo(0, 0); ctx.lineTo(45, -25); // Top mid cross
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-45, 65); ctx.lineTo(0, 40); ctx.lineTo(45, 65); // Bottom mid cross
+        ctx.stroke();
+
+        // Internal Light (Energy Accumulation)
+        if (energyLevel > 5) {
+            ctx.globalCompositeOperation = 'lighter';
+            const innerGlow = ctx.createRadialGradient(0, 0, 5, 0, 0, 60);
+            innerGlow.addColorStop(0, `rgba(255, 255, 255, ${energyLevel/100})`);
+            innerGlow.addColorStop(1, `rgba(255, 255, 255, 0)`);
+            ctx.fillStyle = innerGlow;
+            ctx.beginPath();
+            ctx.arc(0, 0, 60, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        ctx.restore();
+    }
+
+    function drawRings(cx, cy) {
+        if (energyLevel <= 2) return;
+        
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1.5;
+        
+        // Ring 1
+        const r1 = 130 + Math.sin(time * 2.5) * 5;
+        ctx.globalAlpha = 0.1 + (energyLevel / 300);
+        ctx.beginPath();
+        ctx.arc(0, 0, r1, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Ring 2 (appears later)
+        if (energyLevel > 40) {
+            const r2 = 170 + Math.cos(time * 2) * 8;
+            ctx.globalAlpha = 0.05 + (energyLevel / 400);
+            ctx.beginPath();
+            ctx.arc(0, 0, r2, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Energy Burst (when full)
+        if (energyLevel >= 98) {
+            const burstR = 120 + Math.random() * 10;
+            ctx.globalAlpha = 0.5;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'white';
+            ctx.beginPath();
+            ctx.arc(0, 0, burstR, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Logic Loop
+     */
+    function animate() {
+        time += 0.02;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Energy Logic
+        if (isCharging) {
+            energyLevel = Math.min(100, energyLevel + 0.35);
+            // Spawning
+            if (Math.random() < 0.2 + (energyLevel/80)) {
+                const p = particles.find(p => !p.active);
+                if (p) p.spawn();
+            }
+        } else {
+            energyLevel = Math.max(0, energyLevel - 0.25);
+        }
+
+        // UI Updates
+        energyBar.style.width = `${energyLevel}%`;
+        
+        if (energyLevel >= 100) {
+            statusText.innerText = "能量共鸣完成 | RESONANCE COMPLETE";
+            statusText.style.color = "white";
+            statusText.style.textShadow = "0 0 10px white";
+            chargeBtn.style.boxShadow = `0 0 ${30 + Math.sin(time*15)*10}px ${accentColor}`;
+        } else if (isCharging) {
+            statusText.innerText = "能量汇聚中... | GATHERING ENERGY...";
+            statusText.style.color = accentColor;
+            statusText.style.textShadow = "none";
+        } else {
+            statusText.innerText = "长按注入能量 | HOLD TO CHARGE";
+            statusText.style.color = "#94a3b8";
+            statusText.style.textShadow = "none";
+        }
+
+        updateAudio(isCharging, energyLevel);
+
+        drawRings(width/2, height/2);
+
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+
+        drawCrystal(width/2, height/2, 1.5);
+
+        requestAnimationFrame(animate);
+    }
+
+    /**
+     * Controls
+     */
+    window.startCharging = function(e) {
+        if(e) e.preventDefault(); // Prevent touch scroll
+        if (!isAudioInit) initAudio();
+        isCharging = true;
+        chargeBtn.classList.add('active');
+    };
+
+    window.stopCharging = function(e) {
+        if(e) e.preventDefault();
+        isCharging = false;
+        chargeBtn.classList.remove('active');
+    };
+
+    // Start
+    animate();
+
+</script>
+</body>
+</html>
